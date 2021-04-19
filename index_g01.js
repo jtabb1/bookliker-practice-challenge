@@ -9,12 +9,15 @@ const myUser = {"id":1, "username":"pouros"}
 document.addEventListener("DOMContentLoaded", function() {
 
 // Function Call(s):
-getBooks().then(console.log).catch(console.log);
+// getBooks().then(console.log).catch(console.log);
+appendBooksToList(list)
+list.addEventListener('click', renderListItemToShowPanel)
+showPanel.addEventListener('click', likeBook)
 
-function getBooks() {
-    return fetch(`${URL_BASE}books/1`)
-    .then(r => r.json());
-}
+// function getBooks() {
+//     return fetch(`${URL_BASE}books/1`)
+//     .then(r => r.json());
+// }
 
 // Understood
 function appendBooksToList(list) {
@@ -118,8 +121,88 @@ function renderShowPanelData(bookObj) {
     }
 }
 
+/*   */
+
+function likeBook(event) {
+    if (event.target.tagName != 'BUTTON') {return}
+    
+    toggleLikeList(myUser)
+}
+
+function toggleLikeList(user) {
+    configObject = createPatchObject(user)
+    
+    fetch(booksURL+'/'+showPanel.dataset.bookId, configObject)
+        .then(res => res.json())
+        .then(json => {
+            renderLikeList(json.users)
+            toggleLikeButton()
+        })
+}
+
+function toggleLikeButton() {
+    button = showPanel.querySelector('#like')
+    if (button.textContent === ' like ') {
+        button.textContent = ' unlike '
+    } else {
+        button.textContent = ' like '
+    }
+}
+
+function renderLikeList(userCollection) {
+    const likeList = showPanel.querySelector('ul')
+    likeList.innerHTML = ''
+    for (const user of userCollection) {
+        const userItem = document.createElement('li')
+        userItem.dataset.userId = user.id
+        userItem.textContent = user.username
+        likeList.appendChild(userItem)
+    }
+}
+
+function createPatchObject(user) {
+    // creates a flexible patch object to pass to our fetch()
+    const currentUsers = currentLikedUsers()
+    let patchBody
+
+    if (listIncludesUser(currentUsers, user)) {
+        patchBody = currentUsers.filter(u => u.id != user.id)
+    } else {
+        patchBody = [...currentUsers]
+        patchBody.push(user)
+    }
+
+    return {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({'users': patchBody})
+    }
+}
+
+function currentLikedUsers() {
+    // returns array of current liked users as sendable object
+    const arr = []
+    for (const user of showPanel.querySelector('ul').children) {
+        arr.push({
+            'id': parseInt(user.dataset.userId),
+            'username': user.textContent
+        })
+    }
+    return arr
+}
+
+function listIncludesUser(collection, desiredUser) {
+    for (const user of collection) {
+        if (user.id === desiredUser.id) {return true}
+    }
+    return false
+}
 
 
+/* */
 
 } );
 
@@ -133,3 +216,31 @@ https://github.com/AlecGrey/bookliker-practice-challenge
 Thank you!
 
 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
